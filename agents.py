@@ -1,5 +1,4 @@
 import random
-from board_gui import BoardGUI
 
 
 class Agent(object):
