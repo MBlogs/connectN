@@ -15,8 +15,8 @@ class BoardGUI:
     self.COLGAP = (self.PLAYWIDTH - self.COLS * self.COUNTERDIAMETER) / (self.COLS + 1)
     self.ROWGAP = (self.PLAYHEIGHT - self.ROWS * self.COUNTERDIAMETER) / (self.ROWS + 1)
     # Window dimensions
-    WINDOWWIDTH = 800
-    WINDOWHEIGHT = 600
+    WINDOWWIDTH = self.PLAYWIDTH + 50 * 2
+    WINDOWHEIGHT = self.PLAYHEIGHT + 50 *2
     self.DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     pygame.init()
     self.font = pygame.font.Font(None, 20)
@@ -37,6 +37,7 @@ class BoardGUI:
 
 
   def end_game(self):
+    print("Press Space to play again")
     while True:
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
