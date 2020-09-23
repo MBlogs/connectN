@@ -7,6 +7,7 @@ import numpy as np
 
 
 if __name__ == "__main__":
+  #  Test update
   game_config = {}
   mcts_config = {}
   game_config["rows"] = 6
