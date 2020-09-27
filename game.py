@@ -4,8 +4,8 @@ import time
 
 class Game:
   def __init__(self, game_config):
-    self.turn = 0
-    self.delay = 0
+    self.player = 0
+    self.delay = game_config["delay"]
     self.connect_length = game_config["connect_length"]
     self.agents = game_config["agents"]
     self.board_gui = game_config["board_gui"]
@@ -17,20 +17,15 @@ class Game:
 
   def reset(self):
     rows, cols = self.board.shape
-    self.turn = 0
+    self.player = 0
     self.board = -np.ones((rows, cols))
     self.board.fill(-1)
 
 
-  def reset_turn(self, board, turn):
+  def reset_state(self, board, turn):
     self.board = board.copy()
-    self.turn = turn
+    self.player = turn
 
-
-  def apply_action(self, action):
-    row = row_from_action(self.board, action)
-    self.board[row, action] = self.turn
-    return self.check_win(row, action)
 
   def show(self):
     if self.visualise:
@@ -38,16 +33,17 @@ class Game:
     if self.write_board:
       print_board(self.board)
 
+  def player_pos(self, increment):
+    """Return position of a player relative to current player"""
+    return (self.player + increment) % len(self.agents)
+
 
   def check_win(self, row, col):
-    """Check for win after a play on row and col. Returns True if win and None if draw"""
-    debug = False
-
+    """Check for win after a play on row and col. Returns True if win, False if non-terminal and None if draw"""
     def win(line):
       count = 0
-      if debug: print(f"Line is {line}")
       for counter in line:
-        if counter == self.turn:
+        if counter == self.player:
           count += 1
           if count >= self.connect_length:
             return True
@@ -55,49 +51,81 @@ class Game:
           count = 0
       return False
 
-    # Return True by checking for connecting runs on the horizontal, vertical, and both diagonals
     rows, cols = self.board.shape
-    # Check Draw
-    if -1 not in self.board:
-      return None
     # Check Win along horizontal, vertical or (both) diagonal axes
-    return (win(self.board[row, :])
+    win = (win(self.board[row, :])
             or win(self.board[:, col])
             or win(np.diagonal(self.board, offset=col - row))
             or win(np.diagonal(np.fliplr(self.board), offset=cols - (col + row) - 1)))
+    # Check for draw
+    if not win and -1 not in self.board:
+      return None
+    else:
+      return win
 
 
   def step(self):
-    """Returns outcome: int >= 0 for player win. -1 for draw. None for non-terminal"""
-    current_agent = self.agents[self.turn]
+    # Steps game based on next agent
+    current_agent = self.agents[self.player]
     legal_actions = get_legal_actions(self.board)
     action = current_agent.act(self.board, legal_actions)
-    assert action in legal_actions
-    win = self.apply_action(action)
-
-    self.show()
-
-    if win:
-      outcome = self.turn
-    elif win is None:
-      outcome = -1
-    else:
-      outcome = None
-
-    self.turn = (self.turn + 1) % 2
+    outcome = self.apply_action(action)
+    time.sleep(self.delay)
     return outcome
+
+
+  def apply_action(self, action):
+    """Returns outcome: int >= 0 for player win. -1 for draw. None for non-terminal"""
+    legal_actions = get_legal_actions(self.board)
+    assert action in legal_actions
+    row = row_from_action(self.board, action) # Find the row that the counter will fall to
+    self.board[row, action] = self.player # Update the board
+    win = self.check_win(row, action) # Check if counter position forms a win
+    self.player = (self.player + 1) % 2
+    self.show()
+    return win
 
   def run(self):
     self.reset()
     self.show()
     while True:
       outcome = self.step()
-      if outcome is not None:
-        return outcome
+      if outcome is True:
+        return self.player_pos(-1)
+      elif outcome is None:
+        return None
+
+
+def infer_action(new_board, old_board):
+  """Takes two boards. Returns first column where there is a difference"""
+  # Check for differences in the boards
+  rows, cols = new_board.shape
+  for col in range(cols):
+    for row in range(rows):
+      if new_board[row, col] != old_board[row, col]:
+        return col
+      if old_board[row, col] == -1:
+        break
+  return None
+
+
+def reward(outcome, turn):
+  """Outcome is who won. Reward is what that outcome means for a particular player"""
+  if outcome is None or outcome == -1:
+    # Outcome is non-terminal or draw
+    return 0
+  elif outcome >= 0:
+    # Someone has won
+    if turn == outcome:
+      return 1
+    else:
+      return -1
+  else:
+    raise Exception("Outcome is not None (non-terminal), -1 (Draw), >= 0 (Winner)")
 
 
 def get_legal_actions(board):
-  # Return all columns that aren't full
+  """Returns all column indexes that aren't full"""
   rows, cols = board.shape
   legal_actions = []
   for col in range(cols):
@@ -107,7 +135,7 @@ def get_legal_actions(board):
 
 
 def row_from_action(board, action):
-  # Action = column to place next counter
+  """Takes board and action (= column to place next counter). Returns the row that the counter will fall to."""
   rows, cols = board.shape
   for row in range(rows):
     if board[row, action] == -1:

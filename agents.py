@@ -8,12 +8,13 @@ class Agent(object):
 
 class RandomAgent(Agent):
   def act(self, board, legal_actions):
+    # print(f"agents.RandomAgent: board is {board}, legal_actions is {legal_actions}")
     return random.choice(legal_actions)
 
 
 class HumanAgent(Agent):
-  def __init__(self, board_gui):
-    self.board_gui = board_gui
+  def __init__(self, game_config):
+    self.board_gui = game_config["board_gui"]
 
   def act(self, board, legal_actions):
     while True:

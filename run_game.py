@@ -3,39 +3,36 @@ from board_gui import BoardGUI
 from agents import RandomAgent
 from agents import HumanAgent
 from mcts_agent import MCTSAgent
+from minimax_agent import MiniMaxAgent
 import numpy as np
 
 
 if __name__ == "__main__":
-  #  Test update
   game_config = {}
   mcts_config = {}
-  game_config["rows"] = 6
-  game_config["cols"] = 7
-  game_config["connect_length"] = 4
+  game_config["rows"] = 4
+  game_config["cols"] = 4
+  game_config["delay"] = 0.5
+  game_config["connect_length"] = 3
   game_config["board_gui"] = BoardGUI(game_config["rows"], game_config["cols"])
   game_config["board"] = -np.ones((game_config["rows"], game_config["cols"]))
   game_config["visualise"] = True
   game_config["write_board"] = True
-
-  mcts_config["my_turn"] = 0
-  mcts_config["agents"] = [RandomAgent(), RandomAgent()]
-
-  # game_config["agents"] = [MCTSAgent(mcts_config, game_config), RandomAgent()]
   game_config["agents"] = [RandomAgent(), RandomAgent()]
-  game_config["agents"] = [HumanAgent(game_config["board_gui"]), RandomAgent()]
+  game_config["agents"] = [MiniMaxAgent(game_config.copy(), 0), HumanAgent(game_config.copy())]
+  game_config["agents"] = [MiniMaxAgent(game_config.copy(), 0), MiniMaxAgent(game_config.copy(), 1)]
+  game_config["agents"] = [HumanAgent(game_config.copy()), MiniMaxAgent(game_config.copy(), 1)]
+  game_config["agents"] = [MiniMaxAgent(game_config.copy(), 1), HumanAgent(game_config.copy())]
   game = Game(game_config)
-
   running = True
 
   while running:
-    outcome = game.run()
+    game_result = game.run()
 
-    if outcome == -1:
+    if game_result is None:
       print("Draw!")
     else:
-      print(f"Player {outcome} wins!")
-
+      print(f"Player {game_result} wins!")
 
     if game_config["visualise"]:
       choice = game_config["board_gui"].end_game()
