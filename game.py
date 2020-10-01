@@ -5,13 +5,13 @@ import time
 class Game:
   def __init__(self, game_config):
     self.player = 0
-    self.delay = game_config["delay"]
     self.connect_length = game_config["connect_length"]
     self.agents = game_config["agents"]
-    self.board_gui = game_config["board_gui"]
     self.board = -np.ones((game_config["rows"], game_config["cols"]))
-    self.visualise = game_config["visualise"]
     self.write_board = game_config["write_board"]
+    self.visualise = game_config["visualise"]
+    if self.visualise:
+      self.board_gui = game_config["board_gui"]
     self.reset()
 
 
@@ -32,10 +32,6 @@ class Game:
       self.board_gui.update(self.board)
     if self.write_board:
       print_board(self.board)
-
-  def player_pos(self, increment):
-    """Return position of a player relative to current player"""
-    return (self.player + increment) % len(self.agents)
 
 
   def check_win(self, row, col):
@@ -65,7 +61,7 @@ class Game:
 
 
   def step(self):
-    # Steps game based on next agent
+    """Steps game based on next agent"""
     current_agent = self.agents[self.player]
     legal_actions = get_legal_actions(self.board)
     action = current_agent.act(self.board, legal_actions)
@@ -94,34 +90,6 @@ class Game:
         return self.player_pos(-1)
       elif outcome is None:
         return None
-
-
-def infer_action(new_board, old_board):
-  """Takes two boards. Returns first column where there is a difference"""
-  # Check for differences in the boards
-  rows, cols = new_board.shape
-  for col in range(cols):
-    for row in range(rows):
-      if new_board[row, col] != old_board[row, col]:
-        return col
-      if old_board[row, col] == -1:
-        break
-  return None
-
-
-def reward(outcome, turn):
-  """Outcome is who won. Reward is what that outcome means for a particular player"""
-  if outcome is None or outcome == -1:
-    # Outcome is non-terminal or draw
-    return 0
-  elif outcome >= 0:
-    # Someone has won
-    if turn == outcome:
-      return 1
-    else:
-      return -1
-  else:
-    raise Exception("Outcome is not None (non-terminal), -1 (Draw), >= 0 (Winner)")
 
 
 def get_legal_actions(board):

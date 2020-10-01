@@ -22,13 +22,14 @@ class MiniMaxAgent(Agent):
 
   def minimax(self, isMaxPlayer, state, depth, alpha=float('-inf'), beta=float('inf')):
     # Assumes player 0 is maximising. Returns: score, action.
+
     if state.is_terminal():
       if state.win is None:
         score = 0  #Draw
       elif state.player == 1:
-        score = 1 #Player 0 (Max) won
+        score = 1 - depth * 0.001 #Player 0 (Max) won
       else:
-        score = -1  #Player 1 (Min) won
+        score = -1 + depth * 0.001 #Player 1 (Min) won
       return score, None
 
     scores = []
@@ -36,16 +37,13 @@ class MiniMaxAgent(Agent):
 
     for next_state in next_states:
       score, action = self.minimax(not isMaxPlayer, next_state, depth+1, alpha, beta)
-
       # Update Alpha-Beta
       if isMaxPlayer and score > max(scores, default=-2):
         alpha = max(alpha, score)
       elif not isMaxPlayer and score < min(scores, default=2):
         beta = min(beta, score)
-
-      # Add new score
+      # Add score
       scores.append(score)
-
       # Alpha Beta Pruning
       if beta <= alpha and self.prune:
         break
@@ -82,9 +80,3 @@ class State:
 
   def __repr__(self):
     return str(self)
-
-  def __hash__(self):
-    return hash(tuple(map(tuple, self.board)))
-
-  def __eq__(node1, node2):
-    return np.array_equal(node1.board, node2.board)

@@ -8,16 +8,22 @@ class Agent(object):
 
 class RandomAgent(Agent):
   def act(self, board, legal_actions):
-    # print(f"agents.RandomAgent: board is {board}, legal_actions is {legal_actions}")
     return random.choice(legal_actions)
 
 
 class HumanAgent(Agent):
   def __init__(self, game_config):
-    self.board_gui = game_config["board_gui"]
+    self.visualise = game_config["visualise"]
+    if self.visualise:
+      self.board_gui = game_config["board_gui"]
 
   def act(self, board, legal_actions):
     while True:
-      action = self.board_gui.action(board)
+      if self.visualise:
+        action = self.board_gui.action(board)
+      else:
+        action = input(f"Play in a column: 0 1 2 3")
+        action = int(action) if action.isdigit() else action
+
       if action in legal_actions:
         return action

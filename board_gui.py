@@ -4,6 +4,7 @@ import numpy as np
 
 class BoardGUI:
   def __init__(self, rows, cols):
+    print(pygame.__file__)
     self.ROWS = rows
     self.COLS = cols
     self.COUNTERDIAMETER = 50
@@ -19,7 +20,6 @@ class BoardGUI:
     WINDOWHEIGHT = self.PLAYHEIGHT + 50 *2
     self.DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     pygame.init()
-    self.font = pygame.font.Font(None, 20)
 
   def action(self, board):
     while True:
@@ -52,10 +52,7 @@ class BoardGUI:
     # Copy and Flip the board for the purpose of visualisation from top left
     board = np.flipud(board)
     # Fill in the Window and playing frame
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    mouse_text = self.font.render("(X: " + str(mouse_x) + " , Y:" + str(mouse_y) + ")", 20, (0, 0, 0))
     self.DISPLAYSURF.fill((255, 255, 255))
-    self.DISPLAYSURF.blit(mouse_text, (10, 10))
     pygame.draw.rect(self.DISPLAYSURF, (0, 0, 255),
                      (self.PLAYX, self.PLAYY, self.PLAYWIDTH, self.PLAYHEIGHT), 0)
     # Draw the counters
